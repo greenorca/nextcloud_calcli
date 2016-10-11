@@ -49,8 +49,7 @@ def getKey(item):
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()
-    config.read('/home/sven/.nextcloud_cal.ini')
-        
+    config.read(os.path.expanduser('~/')+'.nextcloud_cal.ini')
  
     client=caldav.DAVClient(config['DEFAULT']['url'],
                             proxy=None,username=config['DEFAULT']['user'],
