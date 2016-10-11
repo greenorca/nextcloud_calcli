@@ -19,4 +19,3 @@ In .conkyrc just add the following line:
 
     ${execi 600 python3 /pathTo/nextcloud_cal.py}
 
-In line 52, adjust path to your home directory.
