@@ -1,12 +1,13 @@
 # nextcloud_calcli
 Python based command line extension to display Owncloud/Nextcloud calendar agenda within conky 
 
+![screenshot](doc/Screenshot.png)
+
 ## Requirements
 
 - Python3
 - caldav library (pip3 install caldav)
-- .nextcloud_cal.ini in your home directory
-
+- create `.nextcloud_cal.ini` in your home directory. Use the following syntax:
 
     [DEFAULT]<br>
     user = user<br>
