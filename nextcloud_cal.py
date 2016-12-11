@@ -5,37 +5,46 @@
 #user = guggus
 #pwd = guggus
 #url = https://odroid/remote.php/dav/calendars/guggus/default/
+#ssl = True
+#urgent_words=BirhtDay, meeting
+#urgent_cals=Contact birthdays
+#urgent_color=db6823
+#summary_length=20
 
 
 from datetime import datetime, date, timedelta
 import caldav, os, sys
 import configparser
+import re
 
 #parse event data into dictionary
-def parseInfo(data):
-    pieces = data.split('\r\n')
-    keys=[]
-    values=[]
-    tStart=0
-    for piece in pieces:
-        kv=piece.split(':')
-        if kv[0]=='SUMMARY' and kv[1]!="Alarm notification":
-            keys.append(kv[0])
-            values.append(kv[1])
-        else:
-            if kv[0].split(';')[0]=='DTSTART':
-                keys.append('DSTART')
-                values.append(parseDate(kv[1]))
-                tStart=values[-1]
+def parseInfo(data, name):
+    events = re.split("END:VEVENT\r\nBEGIN:VEVENT\r\n|END:VEVENT\r\nEND:VCALENDAR\r\n\r\n", data)
+    for event in events:
+        pieces = event.split('\r\n')
+        keys=[]
+        values=[]
+        tStart=0
+        for piece in pieces:
+            kv=piece.split(':')
+            if kv[0]=='SUMMARY' and kv[1]!="Alarm notification":
+                keys.append(kv[0])
+                values.append(kv[1])
             else:
-                # look for multi_day events
-                if tStart!=0 and kv[0].split(';')[0]=='DTEND':
-                    tEnd = parseDate(kv[1])
-                    if (tEnd-tStart).days > 1:
-                        keys.append('DEND')
-                        values.append(tEnd)
-
-    return dict(list(zip(keys,values)))
+                if kv[0].split(';')[0]=='DTSTART':
+                    keys.append('DSTART')
+                    values.append(parseDate(kv[1]))
+                    tStart=values[-1]
+                else:
+                    # look for multi_day events
+                    if tStart!=0 and kv[0].split(';')[0]=='DTEND':
+                        tEnd = parseDate(kv[1])
+                        if (tEnd-tStart).days > 1:
+                            keys.append('DEND')
+                            values.append(tEnd)
+        keys.append('CAL')
+        values.append(name)
+        return dict(list(zip(keys,values)))
 
 def parseDate(dateString):
     pieces = dateString.split('T')
@@ -53,16 +62,17 @@ if __name__ == '__main__':
  
     client=caldav.DAVClient(config['DEFAULT']['url'],
                             proxy=None,username=config['DEFAULT']['user'],
-                            password=config['DEFAULT']['pwd'],auth=None,ssl_verify_cert=False)
+                            password=config['DEFAULT']['pwd'],auth=None,ssl_verify_cert=bool(config['DEFAULT']['ssl']))
     principal = client.principal()
-    
     calendars = principal.calendars()
     event_data=[]
     #cycle through all calendars
     for calendar in calendars:    
+        props = calendar.get_properties([caldav.elements.dav.DisplayName(),])
+        name = props[caldav.elements.dav.DisplayName().tag]
         results = calendar.date_search(date.today(), date.today()+timedelta(days=17))
         for ev in results:
-            event_data.append(parseInfo(ev.data))
+            event_data.append(parseInfo(ev.data, name))
     # sort by datetime
     event_data = sorted(event_data, key=getKey) 
     
@@ -70,18 +80,23 @@ if __name__ == '__main__':
     i=0
     #output
     for x in event_data: 
-        if i > 6:
+        if i > 10:
             break;
-        datestr = x['DSTART'].date().strftime('%a %d.%m.')
+        datestr = x['DSTART'].date().strftime('%a %d.%m')
         if x['DSTART'].date()==currentDate:
-            datestr="          "
+            datestr="         "
         else:
             currentDate = x['DSTART'].date()               
             
         timestr = str(x['DSTART'].time())[0:5]
         if timestr=='00:00':
             timestr = '-all-'
-        sys.stdout.write(datestr+' '+timestr+'\t'+x['SUMMARY'][0:15]+os.linesep)
+        words=config['DEFAULT']['urgent_words'].split(', ')
+        urgent_cals=config['DEFAULT']['urgent_cals'].split(', ')
+        if any (word in x['SUMMARY'].lower() for word in words) or any (urgent_cal in x['CAL'] for urgent_cal in urgent_cals):
+            sys.stdout.write(datestr+'  '+timestr+'  '+'${color '+config['DEFAULT']['urgent_color']+'}'+x['SUMMARY'][:int(config['DEFAULT']['summary_length'])]+'${color}'+os.linesep)
+        else:
+            sys.stdout.write(datestr+'  '+timestr+'  '+x['SUMMARY'][:int(config['DEFAULT']['summary_length'])]+os.linesep)
         if 'DEND' in x.keys():
             sys.stdout.write("ends on "+str(x['DEND'].date())+os.linesep)
         i=i+1
