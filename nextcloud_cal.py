@@ -6,7 +6,7 @@
 #pwd = guggus
 #url = https://odroid/remote.php/dav/calendars/guggus/default/
 #ssl = True
-#urgent_words=BirhtDay, meeting
+#urgent_words=BirhtDay, meeting #case insesitive
 #urgent_cals=Contact birthdays
 #urgent_color=db6823
 #summary_length=20
@@ -96,7 +96,7 @@ if __name__ == '__main__':
             timestr = '-all-'
         words=config['DEFAULT']['urgent_words'].split(', ')
         urgent_cals=config['DEFAULT']['urgent_cals'].split(', ')
-        if any (word in x['SUMMARY'].lower() for word in words) or any (urgent_cal in x['CAL'] for urgent_cal in urgent_cals):
+        if any (word.lower() in x['SUMMARY'].lower() for word in words) or any (urgent_cal in x['CAL'] for urgent_cal in urgent_cals):
             sys.stdout.write(datestr+'  '+timestr+'  '+'${color '+config['DEFAULT']['urgent_color']+'}'+x['SUMMARY'][:int(config['DEFAULT']['summary_length'])]+'${color}'+os.linesep)
         else:
             sys.stdout.write(datestr+'  '+timestr+'  '+x['SUMMARY'][:int(config['DEFAULT']['summary_length'])]+os.linesep)
