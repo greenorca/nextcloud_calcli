@@ -10,6 +10,9 @@
 #urgent_cals=Contact birthdays
 #urgent_color=db6823
 #summary_length=20
+#lines_to_display=10
+#time_delta=20
+
 
 
 from datetime import datetime, date, timedelta
@@ -70,7 +73,7 @@ if __name__ == '__main__':
     for calendar in calendars:    
         props = calendar.get_properties([caldav.elements.dav.DisplayName(),])
         name = props[caldav.elements.dav.DisplayName().tag]
-        results = calendar.date_search(date.today(), date.today()+timedelta(days=17))
+        results = calendar.date_search(date.today(), date.today()+timedelta(days=int(config['DEFAULT']['time_delta'])))
         for ev in results:
             event_data.append(parseInfo(ev.data, name))
     # sort by datetime
@@ -80,7 +83,7 @@ if __name__ == '__main__':
     i=0
     #output
     for x in event_data: 
-        if i > 10:
+        if i >= int(config['DEFAULT']['lines_to_display']):
             break;
         datestr = x['DSTART'].date().strftime('%a %d.%m')
         if x['DSTART'].date()==currentDate:
