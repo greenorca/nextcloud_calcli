@@ -5,7 +5,7 @@
 #user = guggus
 #pwd = guggus
 #url = https://odroid/remote.php/dav/calendars/guggus/default/
-#ssl = True
+#ssl = True | False (in case your certficate cannot be verified)
 #urgent_words=BirhtDay, meeting #case insesitive
 #urgent_cals=Contact birthdays
 #urgent_color=db6823
@@ -62,10 +62,11 @@ def getKey(item):
 if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read(os.path.expanduser('~/')+'.nextcloud_cal.ini')
- 
+    #create client
     client=caldav.DAVClient(config['DEFAULT']['url'],
                             proxy=None,username=config['DEFAULT']['user'],
-                            password=config['DEFAULT']['pwd'],auth=None,ssl_verify_cert=bool(config['DEFAULT']['ssl']))
+                            password=config['DEFAULT']['pwd'],auth=None,ssl_verify_cert=bool(config['DEFAULT']['ssl']=='True'))
+    #create connection 
     principal = client.principal()
     calendars = principal.calendars()
     event_data=[]
@@ -78,28 +79,35 @@ if __name__ == '__main__':
             event_data.append(parseInfo(ev.data, name))
     # sort by datetime
     event_data = sorted(event_data, key=getKey) 
+
+    # parsing keywords for later colourization
+    words=config['DEFAULT']['urgent_words'].split(', ')
+    urgent_cals=config['DEFAULT']['urgent_cals'].split(', ')
     
     currentDate = date.today()-timedelta(days=1)
     i=0
+
     #output
-    for x in event_data: 
+    for event in event_data: 
         if i >= int(config['DEFAULT']['lines_to_display']):
             break;
-        datestr = x['DSTART'].date().strftime('%a %d.%m')
-        if x['DSTART'].date()==currentDate:
+        datestr = event['DSTART'].date().strftime('%a %d.%m')
+        #avoid duplicate date output
+        if event['DSTART'].date()==currentDate:
             datestr="         "
         else:
-            currentDate = x['DSTART'].date()               
+            currentDate = event['DSTART'].date()               
             
-        timestr = str(x['DSTART'].time())[0:5]
+        timestr = str(event['DSTART'].time())[0:5]
+        # all-day events
         if timestr=='00:00':
             timestr = '-all-'
-        words=config['DEFAULT']['urgent_words'].split(', ')
-        urgent_cals=config['DEFAULT']['urgent_cals'].split(', ')
-        if any (word.lower() in x['SUMMARY'].lower() for word in words) or any (urgent_cal in x['CAL'] for urgent_cal in urgent_cals):
-            sys.stdout.write(datestr+'  '+timestr+'  '+'${color '+config['DEFAULT']['urgent_color']+'}'+x['SUMMARY'][:int(config['DEFAULT']['summary_length'])]+'${color}'+os.linesep)
+        # actual output generation with colors depending on keywords
+        if (any (word.lower() in event['SUMMARY'].lower() for word in words) or 
+			any (urgent_cal in event['CAL'] for urgent_cal in urgent_cals)):
+            sys.stdout.write(datestr+'  '+timestr+'  '+'${color '+config['DEFAULT']['urgent_color']+'}'+event['SUMMARY'][:int(config['DEFAULT']['summary_length'])]+'${color}'+os.linesep)
         else:
-            sys.stdout.write(datestr+'  '+timestr+'  '+x['SUMMARY'][:int(config['DEFAULT']['summary_length'])]+os.linesep)
-        if 'DEND' in x.keys():
-            sys.stdout.write("ends on "+str(x['DEND'].date())+os.linesep)
+            sys.stdout.write(datestr+'  '+timestr+'  '+event['SUMMARY'][:int(config['DEFAULT']['summary_length'])]+os.linesep)
+        if 'DEND' in event.keys():
+            sys.stdout.write("ends on "+str(event['DEND'].date())+os.linesep)
         i=i+1
