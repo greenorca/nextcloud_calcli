@@ -97,7 +97,9 @@ if __name__ == '__main__':
             datestr="         "
         else:
             currentDate = event['DSTART'].date()               
-            
+        # replace todays date with "Today"    
+        if event['DSTART'].date()==date.today():
+            datestr="Today    "
         timestr = str(event['DSTART'].time())[0:5]
         # all-day events
         if timestr=='00:00':
