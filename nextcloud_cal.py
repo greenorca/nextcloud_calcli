@@ -90,7 +90,8 @@ if __name__ == '__main__':
             datestr="         "
         else:
             currentDate = x['DSTART'].date()               
-            
+        if x['DSTART'].date()==date.today():
+            datestr="Today    "
         timestr = str(x['DSTART'].time())[0:5]
         if timestr=='00:00':
             timestr = '-all-'
