@@ -13,6 +13,13 @@ Python based command line extension to display Owncloud/Nextcloud calendar agend
     user = user<br>
     pwd = guggus<br>
     url = https://yourserver/remote.php/dav/calendars/user/default/<br>
+    ssl = True || False (in case your certificate can't be verified)
+    urgent_words=BirhtDay, meeting #case insesitive
+    urgent_cals=Contact birthdays
+    urgent_color=db6823
+    summary_length=20
+    lines_to_display=10
+    time_delta=20
 
 
 ## Adaptations
