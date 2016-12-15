@@ -3,6 +3,8 @@ Python based command line extension to display Owncloud/Nextcloud calendar agend
 
 ![screenshot](doc/Screenshot.png)
 
+Thanks a lot to sprnza for tuning and bug fixes.
+
 ## Requirements
 
 - Python3
