@@ -52,9 +52,9 @@ def parseInfo(data, name):
 def parseDate(dateString):
     pieces = dateString.split('T')
     if len(pieces)==1:
-        return datetime.strptime(dateString,"%Y%m%d")
+        return datetime.strptime(dateString,"%Y%m%d") + timedelta(hours=1)
     else:
-        return datetime.strptime(dateString,"%Y%m%dT%H%M%SZ")
+        return datetime.strptime(dateString,"%Y%m%dT%H%M%SZ")  + timedelta(hours=1)
 
 def getKey(item):
      return item["DSTART"]
