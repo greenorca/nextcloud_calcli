@@ -22,9 +22,9 @@ import re
 
 #parse event data into dictionary
 def parseInfo(data, name):
-    events = re.split("END:VEVENT\r\nBEGIN:VEVENT\r\n|END:VEVENT\r\nEND:VCALENDAR\r\n\r\n", data)
+    events = re.split("END:VEVENT\nBEGIN:VEVENT\n|END:VEVENT\nEND:VCALENDAR\n\n", data)
     for event in events:
-        pieces = event.split('\r\n')
+        pieces = event.split('\n')
         keys=[]
         values=[]
         tStart=0
@@ -66,29 +66,29 @@ if __name__ == '__main__':
     client=caldav.DAVClient(config['DEFAULT']['url'],
                             proxy=None,username=config['DEFAULT']['user'],
                             password=config['DEFAULT']['pwd'],auth=None,ssl_verify_cert=bool(config['DEFAULT']['ssl']=='True'))
-    #create connection 
+    #create connection
     principal = client.principal()
     calendars = principal.calendars()
     event_data=[]
     #cycle through all calendars
-    for calendar in calendars:    
+    for calendar in calendars:
         props = calendar.get_properties([caldav.elements.dav.DisplayName(),])
         name = props[caldav.elements.dav.DisplayName().tag]
         results = calendar.date_search(date.today(), date.today()+timedelta(days=int(config['DEFAULT']['time_delta'])))
         for ev in results:
             event_data.append(parseInfo(ev.data, name))
     # sort by datetime
-    event_data = sorted(event_data, key=getKey) 
+    event_data = sorted(event_data, key=getKey)
 
     # parsing keywords for later colourization
     words=config['DEFAULT']['urgent_words'].split(', ')
     urgent_cals=config['DEFAULT']['urgent_cals'].split(', ')
-    
+
     currentDate = date.today()-timedelta(days=1)
     i=0
 
     #output
-    for event in event_data: 
+    for event in event_data:
         if i >= int(config['DEFAULT']['lines_to_display']):
             break;
         datestr = event['DSTART'].date().strftime('%a %d.%m')
@@ -96,8 +96,8 @@ if __name__ == '__main__':
         if event['DSTART'].date()==currentDate:
             datestr="         "
         else:
-            currentDate = event['DSTART'].date()               
-        # replace todays date with "Today"    
+            currentDate = event['DSTART'].date()
+        # replace todays date with "Today"
         if event['DSTART'].date()==date.today():
             datestr="Today    "
         timestr = str(event['DSTART'].time())[0:5]
@@ -105,7 +105,7 @@ if __name__ == '__main__':
         if timestr=='00:00':
             timestr = '-all-'
         # actual output generation with colors depending on keywords
-        if (any (word.lower() in event['SUMMARY'].lower() for word in words) or 
+        if (any (word.lower() in event['SUMMARY'].lower() for word in words) or
 			any (urgent_cal in event['CAL'] for urgent_cal in urgent_cals)):
             sys.stdout.write(datestr+'  '+timestr+'  '+'${color '+config['DEFAULT']['urgent_color']+'}'+event['SUMMARY'][:int(config['DEFAULT']['summary_length'])]+'${color}'+os.linesep)
         else:
