@@ -23,6 +23,8 @@ import re
 summertime = 1  # 0 for winter, 1 for summer in Europe
 
 # parse event data into dictionary
+
+
 def parseInfo(data, name):
     events = re.split(
         "END:VEVENT\nBEGIN:VEVENT\n|END:VEVENT\nEND:VCALENDAR\n\n", data)
@@ -83,7 +85,7 @@ if __name__ == '__main__':
         props = calendar.get_properties([caldav.elements.dav.DisplayName(),])
         name = props[caldav.elements.dav.DisplayName().tag]
         results = calendar.date_search(date.today(), date.today()
-                       + timedelta(days=int(config['DEFAULT']['time_delta'])))
+                                       + timedelta(days=int(config['DEFAULT']['time_delta'])))
         for ev in results:
             event_data.append(parseInfo(ev.data, name))
     # sort by datetime
